@@ -9,13 +9,13 @@
 
 namespace tc
 {
-    class WebRtcClient;
+    class WebRtcClientImpl;
 
     class SetSessionDescObserverImpl : public webrtc::SetSessionDescriptionObserver {
     public:
 
-        static rtc::scoped_refptr<SetSessionDescObserverImpl> Make(const std::shared_ptr<WebRtcClient>& client);
-        SetSessionDescObserverImpl(const std::shared_ptr<WebRtcClient>& client);
+        static rtc::scoped_refptr<SetSessionDescObserverImpl> Make(const std::shared_ptr<WebRtcClientImpl>& client);
+        SetSessionDescObserverImpl(const std::shared_ptr<WebRtcClientImpl>& client);
 
         // overrides
         void OnSuccess() override;
@@ -24,7 +24,7 @@ namespace tc
 
     private:
 
-        std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
+        std::shared_ptr<WebRtcClientImpl> webrtc_client_ = nullptr;
 
     };
 

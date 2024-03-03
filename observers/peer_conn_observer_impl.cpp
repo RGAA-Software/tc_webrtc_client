@@ -11,11 +11,11 @@
 namespace tc
 {
 
-    std::shared_ptr<PeerConnObserverImpl> PeerConnObserverImpl::Make(const std::shared_ptr<WebRtcClient>& client) {
+    std::shared_ptr<PeerConnObserverImpl> PeerConnObserverImpl::Make(const std::shared_ptr<WebRtcClientImpl>& client) {
         return std::make_shared<PeerConnObserverImpl>(client);
     }
 
-    PeerConnObserverImpl::PeerConnObserverImpl(const std::shared_ptr<WebRtcClient>& client) {
+    PeerConnObserverImpl::PeerConnObserverImpl(const std::shared_ptr<WebRtcClientImpl>& client) {
         webrtc_client_ = client;
     }
 

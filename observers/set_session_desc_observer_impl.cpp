@@ -9,12 +9,12 @@
 namespace tc
 {
 
-    rtc::scoped_refptr<SetSessionDescObserverImpl> SetSessionDescObserverImpl::Make(const std::shared_ptr<WebRtcClient>& client) {
+    rtc::scoped_refptr<SetSessionDescObserverImpl> SetSessionDescObserverImpl::Make(const std::shared_ptr<WebRtcClientImpl>& client) {
         auto c = new rtc::RefCountedObject<SetSessionDescObserverImpl>(client);
         return rtc::scoped_refptr<SetSessionDescObserverImpl>(c);
     }
 
-    SetSessionDescObserverImpl::SetSessionDescObserverImpl(const std::shared_ptr<WebRtcClient>& client) {
+    SetSessionDescObserverImpl::SetSessionDescObserverImpl(const std::shared_ptr<WebRtcClientImpl>& client) {
         webrtc_client_ = client;
     }
 

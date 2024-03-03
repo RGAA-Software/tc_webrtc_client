@@ -15,14 +15,14 @@ using namespace nlohmann;
 namespace tc
 {
 
-    class WebRtcClient;
+    class WebRtcClientImpl;
 
     class PeerConnObserverImpl : public webrtc::PeerConnectionObserver {
     public:
 
-        static std::shared_ptr<PeerConnObserverImpl> Make(const std::shared_ptr<WebRtcClient>& client);
+        static std::shared_ptr<PeerConnObserverImpl> Make(const std::shared_ptr<WebRtcClientImpl>& client);
 
-        PeerConnObserverImpl(const std::shared_ptr<WebRtcClient>& client);
+        PeerConnObserverImpl(const std::shared_ptr<WebRtcClientImpl>& client);
 
         // overrides
         void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override;
@@ -69,7 +69,7 @@ namespace tc
 
     private:
 
-        std::shared_ptr<WebRtcClient> webrtc_client_ = nullptr;
+        std::shared_ptr<WebRtcClientImpl> webrtc_client_ = nullptr;
 
     };
 

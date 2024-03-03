@@ -7,15 +7,15 @@
 namespace tc
 {
 
-    std::shared_ptr<WebRtcClient> WebRtcClient::Make() {
-        return std::make_shared<WebRtcClient>();
+    std::shared_ptr<WebRtcClientImpl> WebRtcClientImpl::Make() {
+        return std::make_shared<WebRtcClientImpl>();
     }
 
-    WebRtcClient::WebRtcClient() {
+    WebRtcClientImpl::WebRtcClientImpl() {
 
     }
 
-    void WebRtcClient::Init(const WebRtcClientParam& param) {
+    void WebRtcClientImpl::Init(const WebRtcClientParam& param) {
         client_param_ = param;
         webrtc::field_trial::InitFieldTrialsFromString("");
         rtc::LogMessage::LogToDebug(rtc::LS_ERROR);
@@ -30,7 +30,7 @@ namespace tc
         InitPeerConnection();
     }
 
-    void WebRtcClient::Exit() {
+    void WebRtcClientImpl::Exit() {
         peer_conn_->Close();
         peer_conn_ = nullptr;
         peer_connection_factory_    = nullptr;
@@ -42,40 +42,40 @@ namespace tc
         rtc::CleanupSSL();
     }
 
-    std::shared_ptr<PeerConnObserverImpl> WebRtcClient::GetPeerConnObserver() {
+    std::shared_ptr<PeerConnObserverImpl> WebRtcClientImpl::GetPeerConnObserver() {
         return peer_conn_observer_;
     }
 
-    std::shared_ptr<VideoFrameObserver> WebRtcClient::GetVideoFrameObserver() {
+    std::shared_ptr<VideoFrameObserver> WebRtcClientImpl::GetVideoFrameObserver() {
         return video_frame_observer_;
     }
 
-    rtc::scoped_refptr<SetSessionDescObserverImpl> WebRtcClient::GetSetSessionDescObserver() {
+    rtc::scoped_refptr<SetSessionDescObserverImpl> WebRtcClientImpl::GetSetSessionDescObserver() {
         return set_session_desc_observer_;
     }
 
-    rtc::scoped_refptr<CreateSessionDescObserverImpl> WebRtcClient::GetCreateSessionDescObserver() {
+    rtc::scoped_refptr<CreateSessionDescObserverImpl> WebRtcClientImpl::GetCreateSessionDescObserver() {
         return create_session_desc_observer_;
     }
 
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> WebRtcClient::GetPeerConnection() {
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface> WebRtcClientImpl::GetPeerConnection() {
         return peer_conn_;
     }
 
-    void WebRtcClient::SetPeerConnection(const rtc::scoped_refptr<webrtc::PeerConnectionInterface>& pc) {
+    void WebRtcClientImpl::SetPeerConnection(const rtc::scoped_refptr<webrtc::PeerConnectionInterface>& pc) {
         peer_conn_ = pc;
     }
 
     // ---- callbacks ---- //
 
-    void WebRtcClient::OnSessionCreated(webrtc::SessionDescriptionInterface *desc) {
+    void WebRtcClientImpl::OnSessionCreated(webrtc::SessionDescriptionInterface *desc) {
         peer_conn_->SetLocalDescription(set_session_desc_observer_.get(), desc);
         std::string sdp;
         desc->ToString(&sdp);
         this->sdp_ = sdp;
     }
 
-    void WebRtcClient::OnIceCandidate(const webrtc::IceCandidateInterface *candidate) {
+    void WebRtcClientImpl::OnIceCandidate(const webrtc::IceCandidateInterface *candidate) {
         std::string ice_candidate;
         std::string ice_sdp_mid;
         int ice_sdp_mline_idx;
@@ -85,11 +85,11 @@ namespace tc
         std::cout << "mid: " << ice_sdp_mid << ", mline idx: " << ice_sdp_mline_idx << ", candidate: " << ice_candidate << std::endl;
     }
 
-    void WebRtcClient::OnIceGatheringComplete() {
+    void WebRtcClientImpl::OnIceGatheringComplete() {
         this->RequestRemoteSDP();
     }
 
-    void WebRtcClient::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+    void WebRtcClientImpl::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
         auto track = transceiver->receiver()->track();
         if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
             auto video_track = static_cast<webrtc::VideoTrackInterface*>(track.get());
@@ -98,7 +98,7 @@ namespace tc
         }
     }
 
-    void WebRtcClient::RequestRemoteSDP() {
+    void WebRtcClientImpl::RequestRemoteSDP() {
         json body_obj {
             {"session_id", "ss1"},
             {"offer", sdp_}
@@ -137,7 +137,7 @@ namespace tc
         }
     }
 
-    void WebRtcClient::CreateSomeMediaDeps(webrtc::PeerConnectionFactoryDependencies& media_deps) {
+    void WebRtcClientImpl::CreateSomeMediaDeps(webrtc::PeerConnectionFactoryDependencies& media_deps) {
 //        media_deps.adm = nullptr;//webrtc::AudioDeviceModule::CreateForTest(webrtc::AudioDeviceModule::kDummyAudio, media_deps.task_queue_factory.get());
 //        media_deps.audio_encoder_factory = webrtc::CreateAudioEncoderFactory<webrtc::AudioEncoderOpus>();
 //        media_deps.audio_decoder_factory = webrtc::CreateAudioDecoderFactory<webrtc::AudioDecoderOpus>();
@@ -150,7 +150,7 @@ namespace tc
 //        media_deps.audio_processing = nullptr;//webrtc::AudioProcessingBuilder().Create();
     }
 
-    void WebRtcClient::InitPeerConnectionFactory() {
+    void WebRtcClientImpl::InitPeerConnectionFactory() {
         configuration_.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
         configuration_.media_config.video.periodic_alr_bandwidth_probing = true;
 
@@ -187,7 +187,7 @@ namespace tc
         std::cout << "after init ...." << std::endl;
     }
 
-    void WebRtcClient::InitPeerConnection() {
+    void WebRtcClientImpl::InitPeerConnection() {
         auto peer_conn_observer = this->GetPeerConnObserver();
         auto result = peer_connection_factory_->CreatePeerConnectionOrError(configuration_,
         webrtc::PeerConnectionDependencies(peer_conn_observer.get()));

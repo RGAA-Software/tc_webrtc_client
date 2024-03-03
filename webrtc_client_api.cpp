@@ -6,10 +6,10 @@
 
 using namespace tc;
 
-static std::shared_ptr<tc::WebRtcClient> g_rtc_client = nullptr;
+static std::shared_ptr<tc::WebRtcClientImpl> g_rtc_client = nullptr;
 
 RTC_CLIENT_API int rtc_client_init(const rtc_client_param& param, void* priv_data) {
-	g_rtc_client = WebRtcClient::Make();
+	g_rtc_client = WebRtcClientImpl::Make();
 	auto client_param = WebRtcClientParam{};
 	client_param.remote_ip_ = std::string(param.remote_ip_);
 	client_param.port_ = param.port_;

@@ -23,12 +23,12 @@ namespace tc
         OnFrameCallback frame_callback_;
     };
 
-    class WebRtcClient : public std::enable_shared_from_this<WebRtcClient> {
+    class WebRtcClientImpl : public std::enable_shared_from_this<WebRtcClientImpl> {
     public:
 
-        static std::shared_ptr<WebRtcClient> Make();
+        static std::shared_ptr<WebRtcClientImpl> Make();
 
-        WebRtcClient();
+        WebRtcClientImpl();
         void Init(const WebRtcClientParam& param);
         void Exit();
 
