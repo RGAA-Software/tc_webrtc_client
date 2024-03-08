@@ -86,7 +86,7 @@ namespace tc
     }
 
     void WebRtcClientImpl::OnIceGatheringComplete() {
-        this->RequestRemoteSDP();
+        //this->RequestRemoteSDP();
     }
 
     void WebRtcClientImpl::OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
