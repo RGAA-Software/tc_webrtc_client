@@ -40,7 +40,7 @@ add_library(${PROJECT_NAME} SHARED ${SRCS})
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} ${WEBRTC_ROOT}/lib/win64/webrtc.lib
-            Winmm ws2_32 Secur32 Crypt32 Msdmo dmoguids tc_common
+            Winmm ws2_32 Secur32 Crypt32 Msdmo dmoguids tc_common_new
             wmcodecdspuuid Iphlpapi.lib Strmiids Quartz Ole32
     )
 elseif (APPLE)
