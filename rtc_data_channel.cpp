@@ -4,6 +4,7 @@
 
 #include "rtc_data_channel.h"
 #include "tc_common_new/log.h"
+#include "tc_common_new/net_tlv_header.h"
 
 namespace tc
 {
@@ -40,9 +41,45 @@ namespace tc
 
     void RtcDataChannel::OnMessage(const webrtc::DataBuffer &buffer) {
         //LOGI("DataChannel Message: {}", buffer.size());
-        std::string data((char*)buffer.data.data(), buffer.size());
-        if (data_cbk_) {
-            data_cbk_(data);
+        auto header = (NetTlvHeader*)buffer.data.data();
+
+        std::string data;
+        data.resize(header->this_buffer_length_);
+        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
+
+        if (header->type_ == kNetTlvFull) {
+            if (data_cbk_) {
+                data_cbk_(data);
+            }
+        }
+        else {
+            LOGI("DataChannel message type: {}", header->type_);
+            if (header->type_ == kNetTlvBegin) {
+                cached_messages_.clear();
+            }
+            cached_messages_.push_back(NetTlvMessage {
+                .type_ = header->type_,
+                .buffer_ = data,
+            });
+
+            if (header->type_ == kNetTlvEnd) {
+                uint32_t total_size = 0;
+                for (const auto& m : cached_messages_) {
+                    total_size += (uint32_t)m.buffer_.size();
+                }
+
+                std::string total_data;
+                total_data.resize(total_size);
+                uint32_t offset = 0;
+                for (const auto& m : cached_messages_) {
+                    memcpy((char*)total_data.data() + offset, m.buffer_.data(), m.buffer_.size());
+                    offset += m.buffer_.size();
+                }
+                if (data_cbk_) {
+                    data_cbk_(total_data);
+                }
+                cached_messages_.clear();
+            }
         }
     }
 
