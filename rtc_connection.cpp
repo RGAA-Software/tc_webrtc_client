@@ -196,15 +196,16 @@ namespace tc
         {
             webrtc::DataChannelInit config;
             config.ordered = true;
-            config.reliable = true;
+            //config.reliable = true;
+            auto ch_name = "media_data_channel";
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
-                    "media_data_channel", &config);
+                    ch_name, &config);
             if (!r_dc.ok()) {
                 LOGE("create datachannel error: {}", r_dc.error().message());
             } else {
                 auto ch = r_dc.value();
                 ch->AddRef();
-                media_data_channel_ = RtcDataChannel::Make(this, ch);
+                media_data_channel_ = std::make_shared<RtcDataChannel>(this, ch, ch_name);
                 media_data_channel_->SetOnDataCallback([=, this](const std::string& msg) {
                     //LOGI("===> OnDataCallback: {}", msg.size());
                     if (media_msg_cbk_) {
@@ -216,15 +217,16 @@ namespace tc
         {
             webrtc::DataChannelInit config;
             config.ordered = true;
-            config.reliable = true;
+            //config.reliable = true;
+            auto ch_name = "ft_data_channel";
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
-                    "ft_data_channel", &config);
+                    ch_name, &config);
             if (!r_dc.ok()) {
                 LOGE("create datachannel error: {}", r_dc.error().message());
             } else {
                 auto ch = r_dc.value();
                 ch->AddRef();
-                ft_data_channel_ = RtcDataChannel::Make(this, ch);
+                ft_data_channel_ = std::make_shared<RtcDataChannel>(this, ch, ch_name);
                 ft_data_channel_->SetOnDataCallback([=, this](const std::string& msg) {
                     if (ft_data_channel_) {
                         ft_msg_cbk_(msg);
@@ -301,6 +303,14 @@ namespace tc
         if (ft_data_channel_) {
             ft_data_channel_->SendData(msg);
         }
+    }
+
+    int64_t RtcConnection::GetQueuingMediaMsgCount() {
+        return media_data_channel_ ? media_data_channel_->GetPendingDataCount() : 0;
+    }
+
+    int64_t RtcConnection::GetQueuingFtMsgCount() {
+        return ft_data_channel_ ? ft_data_channel_->GetPendingDataCount() : 0;
     }
 
 }

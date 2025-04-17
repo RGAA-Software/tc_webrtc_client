@@ -40,7 +40,6 @@ namespace tc
         }
 
         virtual void PostMediaMessage(const std::string& msg) = 0;
-
         virtual void PostFtMessage(const std::string& msg) = 0;
 
         virtual void SetMediaMessageCallback(const OnMediaMessageCallback& cbk) {
@@ -50,6 +49,9 @@ namespace tc
         virtual void SetFtMessageCallback(const OnFtMessageCallback& cbk) {
             ft_msg_cbk_ = cbk;
         }
+
+        virtual int64_t GetQueuingMediaMsgCount() = 0;
+        virtual int64_t GetQueuingFtMsgCount() = 0;
 
     protected:
         OnLocalSdpSetCallback local_sdp_set_cbk_;

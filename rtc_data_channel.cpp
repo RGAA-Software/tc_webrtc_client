@@ -9,14 +9,11 @@
 namespace tc
 {
 
-    std::shared_ptr<RtcDataChannel> RtcDataChannel::Make(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch) {
-        return std::make_shared<RtcDataChannel>(client, ch);
-    }
-
-    RtcDataChannel::RtcDataChannel(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch) {
+    RtcDataChannel::RtcDataChannel(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch, const std::string& name) {
         this->client_ = client;
         this->data_channel_ = ch;
         this->data_channel_->RegisterObserver(this);
+        this->name_ = name;
     }
 
     RtcDataChannel::~RtcDataChannel() {
@@ -94,13 +91,16 @@ namespace tc
 
     void RtcDataChannel::SendData(const std::string& msg) {
         if (!connected_) {
-            LOGW("DataChannel is not connected now.");
+            LOGW("DataChannel is invalid: {}", name_);
             return;
         }
         ++pending_data_count_;
         this->data_channel_->Send(webrtc::DataBuffer(msg));
         //RLogI("send data via data channel: {}", msg.size());
         --pending_data_count_;
+        if (name_ == "ft_data_channel") {
+            //LOGI("send data via data channel, size: {}, pending count: {}", msg.size(), pending_data_count_);
+        }
     }
 
     int RtcDataChannel::GetPendingDataCount() {
