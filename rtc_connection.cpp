@@ -195,8 +195,8 @@ namespace tc
 
         {
             webrtc::DataChannelInit config;
-            config.maxRetransmits = 0;
             config.ordered = true;
+            config.reliable = true;
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
                     "media_data_channel", &config);
             if (!r_dc.ok()) {
@@ -214,10 +214,11 @@ namespace tc
             }
         }
         {
-            webrtc::DataChannelInit data_channel_config;
-            data_channel_config.ordered = true;
+            webrtc::DataChannelInit config;
+            config.ordered = true;
+            config.reliable = true;
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
-                    "ft_data_channel", &data_channel_config);
+                    "ft_data_channel", &config);
             if (!r_dc.ok()) {
                 LOGE("create datachannel error: {}", r_dc.error().message());
             } else {
