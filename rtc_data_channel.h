@@ -23,8 +23,7 @@ namespace tc
 
     class RtcDataChannel :  public webrtc::DataChannelObserver {
     public:
-        static std::shared_ptr<RtcDataChannel> Make(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch);
-        RtcDataChannel(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch);
+        RtcDataChannel(RtcConnection* client, rtc::scoped_refptr<webrtc::DataChannelInterface> ch, const std::string& name);
         ~RtcDataChannel();
 
         void OnStateChange() override;
@@ -46,6 +45,7 @@ namespace tc
         bool exit_via_reconnect_ = false;
         OnDataCallback data_cbk_;
         std::vector<NetTlvMessage> cached_messages_;
+        std::string name_;
     };
 
 } // namespace dl

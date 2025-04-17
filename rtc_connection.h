@@ -37,6 +37,8 @@ namespace tc
 
         void PostMediaMessage(const std::string &msg) override;
         void PostFtMessage(const std::string &msg) override;
+        int64_t GetQueuingMediaMsgCount() override;
+        int64_t GetQueuingFtMsgCount() override;
 
     private:
         void CreatePeerConnection();
