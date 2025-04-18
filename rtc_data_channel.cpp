@@ -40,6 +40,19 @@ namespace tc
         //LOGI("DataChannel Message: {}", buffer.size());
         auto header = (NetTlvHeader*)buffer.data.data();
 
+        if (name_ == "ft_data_channel") {
+            //LOGI("from: {}, index: {} => Message size: {}", name_, header->pkt_index_, header->this_buffer_length_);
+            auto curr_pkt_index = header->pkt_index_;
+            if (last_recv_pkt_index_ == 0) {
+                last_recv_pkt_index_ = curr_pkt_index;
+            }
+            auto diff = curr_pkt_index - last_recv_pkt_index_;
+            if (diff > 1) {
+                LOGE("**** Message Index Error ****\n current index: {}, last index: {}", curr_pkt_index, last_recv_pkt_index_);
+            }
+            last_recv_pkt_index_ = curr_pkt_index;
+        }
+
         std::string data;
         data.resize(header->this_buffer_length_);
         memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
@@ -50,7 +63,7 @@ namespace tc
             }
         }
         else {
-            LOGI("DataChannel message type: {}", header->type_);
+            //LOGI("DataChannel message type: {}", header->type_);
             if (header->type_ == kNetTlvBegin) {
                 cached_messages_.clear();
             }
@@ -94,8 +107,34 @@ namespace tc
             LOGW("DataChannel is invalid: {}", name_);
             return;
         }
+
+        // test beg //
+        auto buffered_amount = data_channel_->buffered_amount();
+        auto max_queue_size = data_channel_->MaxSendQueueSize();
+        if (buffered_amount >= max_queue_size/2) {
+            //LOGW("Client, buffered amount: {}, max queue size: {}", buffered_amount, max_queue_size);
+        }
+        // test end //
+
+        // wrap message
+        auto header = NetTlvHeader {
+            .type_ = kNetTlvFull,
+            .this_buffer_length_ = (uint32_t)msg.size(),
+            .this_buffer_begin_ = 0,
+            .this_buffer_end_ = (uint32_t)msg.size(),
+            .parent_buffer_length_ = (uint32_t)msg.size(),
+            .pkt_index_ = send_pkt_index_++,
+        };
+
+        std::string buffer;
+        buffer.resize(sizeof(NetTlvHeader) + msg.size());
+        memcpy((char*)buffer.data(), (char*)&header, sizeof(NetTlvHeader));
+        memcpy((char*)buffer.data() + sizeof(NetTlvHeader), msg.data(), msg.size());
+
+        auto rtc_buffer = webrtc::DataBuffer(rtc::CopyOnWriteBuffer(buffer), true);
+
         ++pending_data_count_;
-        this->data_channel_->Send(webrtc::DataBuffer(msg));
+        this->data_channel_->Send(rtc_buffer);
         //RLogI("send data via data channel: {}", msg.size());
         --pending_data_count_;
         if (name_ == "ft_data_channel") {
@@ -105,6 +144,12 @@ namespace tc
 
     int RtcDataChannel::GetPendingDataCount() {
         return pending_data_count_;
+    }
+
+    bool RtcDataChannel::HasEnoughBufferForQueuingMessages() {
+        return data_channel_
+            && data_channel_->state() == webrtc::DataChannelInterface::DataState::kOpen
+            && data_channel_->buffered_amount() <= data_channel_->MaxSendQueueSize()*1/2;
     }
 
     void RtcDataChannel::Close() {
