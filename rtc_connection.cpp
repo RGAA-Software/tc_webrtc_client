@@ -196,7 +196,7 @@ namespace tc
         {
             webrtc::DataChannelInit config;
             config.ordered = true;
-            //config.reliable = true;
+            config.reliable = true;
             auto ch_name = "media_data_channel";
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
                     ch_name, &config);
@@ -217,7 +217,7 @@ namespace tc
         {
             webrtc::DataChannelInit config;
             config.ordered = true;
-            //config.reliable = true;
+            config.reliable = true;
             auto ch_name = "ft_data_channel";
             RTCErrorOr<rtc::scoped_refptr<DataChannelInterface>> r_dc = peer_conn->CreateDataChannelOrError(
                     ch_name, &config);
@@ -311,6 +311,14 @@ namespace tc
 
     int64_t RtcConnection::GetQueuingFtMsgCount() {
         return ft_data_channel_ ? ft_data_channel_->GetPendingDataCount() : 0;
+    }
+
+    bool RtcConnection::HasEnoughBufferForQueuingMediaMessages() {
+        return media_data_channel_ && media_data_channel_->HasEnoughBufferForQueuingMessages();
+    }
+
+    bool RtcConnection::HasEnoughBufferForQueuingFtMessages() {
+        return ft_data_channel_ && ft_data_channel_->HasEnoughBufferForQueuingMessages();
     }
 
 }

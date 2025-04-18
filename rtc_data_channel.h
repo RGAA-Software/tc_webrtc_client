@@ -35,6 +35,7 @@ namespace tc
         void SetExitViaReconnect(bool reconn) { exit_via_reconnect_ = reconn; }
         void Close();
 
+        bool HasEnoughBufferForQueuingMessages();
         void SetOnDataCallback(OnDataCallback&& cbk);
 
     private:
@@ -46,6 +47,8 @@ namespace tc
         OnDataCallback data_cbk_;
         std::vector<NetTlvMessage> cached_messages_;
         std::string name_;
+        std::atomic<uint32_t> send_pkt_index_ = 0;
+        std::atomic<uint32_t> last_recv_pkt_index_ = 0;
     };
 
 } // namespace dl

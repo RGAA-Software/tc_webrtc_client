@@ -53,6 +53,9 @@ namespace tc
         virtual int64_t GetQueuingMediaMsgCount() = 0;
         virtual int64_t GetQueuingFtMsgCount() = 0;
 
+        virtual bool HasEnoughBufferForQueuingMediaMessages() = 0;
+        virtual bool HasEnoughBufferForQueuingFtMessages() = 0;
+
     protected:
         OnLocalSdpSetCallback local_sdp_set_cbk_;
         OnLocalIceCallback local_ice_cbk_;
