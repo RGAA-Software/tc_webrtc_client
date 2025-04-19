@@ -47,8 +47,12 @@ namespace tc
         OnDataCallback data_cbk_;
         std::vector<NetTlvMessage> cached_messages_;
         std::string name_;
-        std::atomic<uint32_t> send_pkt_index_ = 0;
-        std::atomic<uint32_t> last_recv_pkt_index_ = 0;
+        std::atomic<uint64_t> send_pkt_index_ = 0;
+        std::atomic<uint64_t> last_recv_pkt_index_ = 0;
+
+        // test beg //
+        uint64_t total_recv_content_bytes_ = 0;
+        // test end //
     };
 
 } // namespace dl

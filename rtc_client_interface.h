@@ -56,6 +56,9 @@ namespace tc
         virtual bool HasEnoughBufferForQueuingMediaMessages() = 0;
         virtual bool HasEnoughBufferForQueuingFtMessages() = 0;
 
+        virtual bool IsMediaChannelReady() = 0;
+        virtual bool IsFtChannelReady() = 0;
+
     protected:
         OnLocalSdpSetCallback local_sdp_set_cbk_;
         OnLocalIceCallback local_ice_cbk_;

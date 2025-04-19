@@ -40,6 +40,8 @@ namespace tc
         //LOGI("DataChannel Message: {}", buffer.size());
         auto header = (NetTlvHeader*)buffer.data.data();
 
+        total_recv_content_bytes_ += header->this_buffer_length_;
+
         if (name_ == "ft_data_channel") {
             //LOGI("from: {}, index: {} => Message size: {}", name_, header->pkt_index_, header->this_buffer_length_);
             auto curr_pkt_index = header->pkt_index_;
@@ -51,6 +53,8 @@ namespace tc
                 LOGE("**** Message Index Error ****\n current index: {}, last index: {}", curr_pkt_index, last_recv_pkt_index_);
             }
             last_recv_pkt_index_ = curr_pkt_index;
+            // test //
+            //LOGI("Pkt index: {}, total_recv_content_bytes: {}", header->pkt_index_, total_recv_content_bytes_);
         }
 
         std::string data;
@@ -122,8 +126,8 @@ namespace tc
             .this_buffer_length_ = (uint32_t)msg.size(),
             .this_buffer_begin_ = 0,
             .this_buffer_end_ = (uint32_t)msg.size(),
-            .parent_buffer_length_ = (uint32_t)msg.size(),
             .pkt_index_ = send_pkt_index_++,
+            .parent_buffer_length_ = (uint32_t)msg.size(),
         };
 
         std::string buffer;
@@ -134,7 +138,10 @@ namespace tc
         auto rtc_buffer = webrtc::DataBuffer(rtc::CopyOnWriteBuffer(buffer), true);
 
         ++pending_data_count_;
-        this->data_channel_->Send(rtc_buffer);
+        if (!this->data_channel_->Send(rtc_buffer)) {
+            connected_ = false;
+            pending_data_count_ = 0;
+        }
         //RLogI("send data via data channel: {}", msg.size());
         --pending_data_count_;
         if (name_ == "ft_data_channel") {

@@ -321,4 +321,12 @@ namespace tc
         return ft_data_channel_ && ft_data_channel_->HasEnoughBufferForQueuingMessages();
     }
 
+    bool RtcConnection::IsMediaChannelReady() {
+        return media_data_channel_ && media_data_channel_->IsConnected();
+    }
+
+    bool RtcConnection::IsFtChannelReady() {
+        return ft_data_channel_ && ft_data_channel_->IsConnected();
+    }
+
 }

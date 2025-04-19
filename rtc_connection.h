@@ -44,6 +44,9 @@ namespace tc
         bool HasEnoughBufferForQueuingMediaMessages() override;
         bool HasEnoughBufferForQueuingFtMessages() override;
 
+        bool IsMediaChannelReady() override;
+        bool IsFtChannelReady() override;
+
     private:
         void CreatePeerConnection();
         void CreatePeerConnectionFactory();
