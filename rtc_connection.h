@@ -19,6 +19,7 @@ namespace tc
     class SetSessCallback;
     class CreateSessCallback;
     class RtcDataChannel;
+    class Thread;
 
     // cached ice
     class CachedIce {
@@ -32,6 +33,7 @@ namespace tc
     public:
         RtcConnection();
         bool Init() override;
+        bool Exit() override;
         bool OnRemoteSdp(const std::string &sdp) override;
         bool OnRemoteIce(const std::string &ice, const std::string &mid, int32_t sdp_mline_index) override;
 
@@ -46,6 +48,10 @@ namespace tc
 
         bool IsMediaChannelReady() override;
         bool IsFtChannelReady() override;
+
+        void On16msTimeout() override;
+
+        void PostWorkTask(std::function<void()>&& task);
 
     private:
         void CreatePeerConnection();
@@ -73,6 +79,9 @@ namespace tc
         std::mutex ice_mtx_;
         std::vector<CachedIce> cached_ices_;
         std::atomic_bool already_set_answer_sdp_ = false;
+
+        std::shared_ptr<Thread> work_thread_ = nullptr;
+
     };
 
 }

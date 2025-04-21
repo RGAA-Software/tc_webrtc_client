@@ -23,6 +23,10 @@ namespace tc
             return false;
         }
 
+        virtual bool Exit() {
+            return false;
+        }
+
         virtual bool OnRemoteSdp(const std::string& sdp) {
             return false;
         }
@@ -58,6 +62,8 @@ namespace tc
 
         virtual bool IsMediaChannelReady() = 0;
         virtual bool IsFtChannelReady() = 0;
+
+        virtual void On16msTimeout() {}
 
     protected:
         OnLocalSdpSetCallback local_sdp_set_cbk_;

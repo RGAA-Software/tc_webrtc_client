@@ -6,6 +6,7 @@
 #include "tc_common_new/log.h"
 #include "tc_common_new/webrtc_helper.h"
 #include "tc_common_new/time_util.h"
+#include "tc_common_new/thread.h"
 #include "peer_callback.h"
 #include "rtc_data_channel.h"
 #include <QApplication>
@@ -21,7 +22,8 @@ namespace tc
 {
 
     RtcConnection::RtcConnection() {
-
+        work_thread_ = Thread::Make("rtc_work_thread", 1024*1024*10);
+        work_thread_->Poll();
     }
 
     bool RtcConnection::Init() {
@@ -110,6 +112,13 @@ namespace tc
         return true;
     }
 
+    bool RtcConnection::Exit() {
+        if (work_thread_) {
+            work_thread_->Exit();
+        }
+        return true;
+    }
+
     static void CreateSomeMediaDeps(PeerConnectionFactoryDependencies& media_deps) {
         media_deps.adm = AudioDeviceModule::CreateForTest(
                 AudioDeviceModule::kDummyAudio, media_deps.task_queue_factory.get());
@@ -179,18 +188,11 @@ namespace tc
         auto result = peer_conn_factory_->
                 CreatePeerConnectionOrError(configuration_, webrtc::PeerConnectionDependencies(peer_callback_.get()));
         if (!result.ok()) {
-            LOGE("create peer connection failed: {}", result.error().message());
+            LOGE("Create peer connection failed: {}", result.error().message());
             return;
         }
-        LOGI("after create peer connection");
+        LOGI("Create peer connection success.");
         auto peer_conn = result.value();
-
-        if (peer_conn.get() == nullptr) {
-            peer_conn_factory_ = nullptr;
-            LOGE("Error on CreatePeerConnection.");
-            //exit(EXIT_FAILURE);
-            // TODO:
-        }
         this->peer_conn_ = peer_conn;
 
         {
@@ -225,10 +227,9 @@ namespace tc
                 LOGE("create datachannel error: {}", r_dc.error().message());
             } else {
                 auto ch = r_dc.value();
-                ch->AddRef();
                 ft_data_channel_ = std::make_shared<RtcDataChannel>(this, ch, ch_name);
                 ft_data_channel_->SetOnDataCallback([=, this](const std::string& msg) {
-                    if (ft_data_channel_) {
+                    if (ft_msg_cbk_) {
                         ft_msg_cbk_(msg);
                     }
                 });
@@ -327,6 +328,19 @@ namespace tc
 
     bool RtcConnection::IsFtChannelReady() {
         return ft_data_channel_ && ft_data_channel_->IsConnected();
+    }
+
+    void RtcConnection::On16msTimeout() {
+        if (ft_data_channel_) {
+            ft_data_channel_->On16msTimeout();
+        }
+        if (media_data_channel_) {
+            media_data_channel_->On16msTimeout();
+        }
+    }
+
+    void RtcConnection::PostWorkTask(std::function<void()>&& task) {
+        this->work_thread_->Post(std::move(task));
     }
 
 }
