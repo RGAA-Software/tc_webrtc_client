@@ -5,6 +5,7 @@
 #include "rtc_data_channel.h"
 #include "tc_common_new/log.h"
 #include "tc_common_new/net_tlv_header.h"
+#include "rtc_connection.h"
 
 namespace tc
 {
@@ -21,9 +22,6 @@ namespace tc
     }
 
     void RtcDataChannel::OnStateChange() {
-        if (exit_via_reconnect_) {
-            return;
-        }
         if (data_channel_->state() == webrtc::DataChannelInterface::kOpen) {
             connected_ = true;
             //context_->SendAppMessage(ClientEvtDataChannelReady{});
@@ -33,7 +31,7 @@ namespace tc
             //context_->SendAppMessage(ClientEvtDataChannelClosed{});
 
         }
-        LOGI("DataChannel state changed: {}, connected: {}", (int)data_channel_->state(), connected_);
+        LOGI("DataChannel[ {} ] state changed: {}, connected: {}", name_, (int)data_channel_->state(), connected_);
     }
 
     void RtcDataChannel::OnMessage(const webrtc::DataBuffer &buffer) {
@@ -42,51 +40,55 @@ namespace tc
 
         total_recv_content_bytes_ += header->this_buffer_length_;
 
-        if (name_ == "ft_data_channel") {
-            //LOGI("from: {}, index: {} => Message size: {}", name_, header->pkt_index_, header->this_buffer_length_);
+        std::string data;
+        data.resize(header->this_buffer_length_);
+        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
+
+        if (IsFtChannel()) {
             auto curr_pkt_index = header->pkt_index_;
             if (last_recv_pkt_index_ == 0) {
                 last_recv_pkt_index_ = curr_pkt_index;
             }
             auto diff = curr_pkt_index - last_recv_pkt_index_;
-            if (diff > 1) {
+            if (diff != 1) {
                 LOGE("**** Message Index Error ****\n current index: {}, last index: {}", curr_pkt_index, last_recv_pkt_index_);
             }
+            //LOGI("from: {}, index: {} => Message size: {}, diff: {}", name_, header->pkt_index_, header->this_buffer_length_, diff);
             last_recv_pkt_index_ = curr_pkt_index;
-            // test //
-            //LOGI("Pkt index: {}, total_recv_content_bytes: {}", header->pkt_index_, total_recv_content_bytes_);
+
+            //
+            std::lock_guard<std::mutex> guard(cached_messages_mtx_);
+            cached_ft_messages_.insert({header->pkt_index_, data});
+
+            return;
         }
 
-        std::string data;
-        data.resize(header->this_buffer_length_);
-        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
 
         if (header->type_ == kNetTlvFull) {
             if (data_cbk_) {
                 data_cbk_(data);
             }
-        }
-        else {
+        } else {
             //LOGI("DataChannel message type: {}", header->type_);
             if (header->type_ == kNetTlvBegin) {
                 cached_messages_.clear();
             }
-            cached_messages_.push_back(NetTlvMessage {
-                .type_ = header->type_,
-                .buffer_ = data,
+            cached_messages_.push_back(NetTlvMessage{
+                    .type_ = header->type_,
+                    .buffer_ = data,
             });
 
             if (header->type_ == kNetTlvEnd) {
                 uint32_t total_size = 0;
-                for (const auto& m : cached_messages_) {
-                    total_size += (uint32_t)m.buffer_.size();
+                for (const auto &m: cached_messages_) {
+                    total_size += (uint32_t) m.buffer_.size();
                 }
 
                 std::string total_data;
                 total_data.resize(total_size);
                 uint32_t offset = 0;
-                for (const auto& m : cached_messages_) {
-                    memcpy((char*)total_data.data() + offset, m.buffer_.data(), m.buffer_.size());
+                for (const auto &m: cached_messages_) {
+                    memcpy((char *) total_data.data() + offset, m.buffer_.data(), m.buffer_.size());
                     offset += m.buffer_.size();
                 }
                 if (data_cbk_) {
@@ -95,6 +97,51 @@ namespace tc
                 cached_messages_.clear();
             }
         }
+    }
+
+    void RtcDataChannel::On16msTimeout() {
+        this->client_->PostWorkTask([=, this]() {
+            std::lock_guard<std::mutex> guard(cached_messages_mtx_);
+            uint64_t beg_idx = 0;
+            bool lack_messages = false;
+            for (const auto& [k, data] : cached_ft_messages_) {
+                if (beg_idx == 0) {
+                    beg_idx = k;
+                }
+                if (k - beg_idx > 1) {
+                    lack_messages = true;
+                    break;
+                }
+                beg_idx = k;
+            }
+
+            if (lack_messages) {
+                LOGW("Lack messages! cached message size: {}", cached_ft_messages_.size());
+                std::stringstream ss;
+                for (const auto& [k, data] : cached_ft_messages_) {
+                    ss << k << ",";
+                }
+                LOGW("cached message sort: {}", ss.str());
+                if (cached_ft_messages_.size() > 1024*8) {
+                    // clear it
+                    LOGE("Clear all cached messages, count: {}", cached_ft_messages_.size());
+                    cached_ft_messages_.clear();
+
+                    // TODO: Notify error
+                }
+                return;
+            }
+
+            if (cached_ft_messages_.size() > 0) {
+                LOGI("Cached message size: {}", cached_ft_messages_.size());
+            }
+            for (const auto& [k, data] : cached_ft_messages_) {
+                if (data_cbk_) {
+                    data_cbk_(data);
+                }
+            }
+            cached_ft_messages_.clear();
+        });
     }
 
     void RtcDataChannel::OnBufferedAmountChange(uint64_t sent_data_size) {
@@ -156,19 +203,27 @@ namespace tc
     bool RtcDataChannel::HasEnoughBufferForQueuingMessages() {
         return data_channel_
             && data_channel_->state() == webrtc::DataChannelInterface::DataState::kOpen
-            && data_channel_->buffered_amount() <= data_channel_->MaxSendQueueSize()*1/2;
+            && data_channel_->buffered_amount() <= data_channel_->MaxSendQueueSize()*1/4;
     }
 
     void RtcDataChannel::Close() {
         LOGI("RtcDataChannel Close!");
+        connected_ = false;
         if (data_channel_) {
             data_channel_->Close();
         }
-        connected_ = false;
     }
 
     void RtcDataChannel::SetOnDataCallback(OnDataCallback&& cbk) {
         data_cbk_ = cbk;
+    }
+
+    bool RtcDataChannel::IsMediaChannel() {
+        return name_ == "media_data_channel";
+    }
+
+    bool RtcDataChannel::IsFtChannel() {
+        return name_ == "ft_data_channel";
     }
 
 } // namespace dl
