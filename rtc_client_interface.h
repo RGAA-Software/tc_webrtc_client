@@ -19,7 +19,7 @@ namespace tc
 
     class RtcClientInterface {
     public:
-        virtual bool Init() {
+        virtual bool Init(const std::string& remote_device_id) {
             return false;
         }
 
@@ -66,6 +66,8 @@ namespace tc
         virtual void On16msTimeout() {}
 
     protected:
+        std::string remote_device_id_;
+
         OnLocalSdpSetCallback local_sdp_set_cbk_;
         OnLocalIceCallback local_ice_cbk_;
 
