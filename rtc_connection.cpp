@@ -26,10 +26,11 @@ namespace tc
         work_thread_->Poll();
     }
 
-    bool RtcConnection::Init() {
+    bool RtcConnection::Init(const std::string& remote_device_id) {
+        this->remote_device_id_ = remote_device_id;
         auto beg = TimeUtil::GetCurrentTimestamp();
         auto exe_dir = qApp->applicationDirPath();
-        Logger::InitLog(exe_dir.toStdString() + "/gr_logs/client_rtc.log", true);
+        Logger::InitLog(exe_dir.toStdString() + std::format("/gr_logs/app.rtc.{}.log", remote_device_id), true);
         LOGI("*******************************");
         LOGI("========BEGIN RTC INIT=========");
 

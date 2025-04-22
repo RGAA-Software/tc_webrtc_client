@@ -32,7 +32,7 @@ namespace tc
     class RtcConnection : public RtcClientInterface {
     public:
         RtcConnection();
-        bool Init() override;
+        bool Init(const std::string& remote_device_id) override;
         bool Exit() override;
         bool OnRemoteSdp(const std::string &sdp) override;
         bool OnRemoteIce(const std::string &ice, const std::string &mid, int32_t sdp_mline_index) override;
