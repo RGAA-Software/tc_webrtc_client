@@ -6,10 +6,8 @@
 #define SDK_PEER_CALLBACK_H
 
 #include "tc_common_new/webrtc_helper.h"
-#include "http/httplib.h"
 #include "json/json.hpp"
 
-using namespace httplib;
 using namespace nlohmann;
 
 namespace tc
