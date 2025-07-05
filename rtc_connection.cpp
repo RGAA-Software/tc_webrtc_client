@@ -295,13 +295,13 @@ namespace tc
         }
     }
 
-    void RtcConnection::PostMediaMessage(const std::string &msg) {
+    void RtcConnection::PostMediaMessage(std::shared_ptr<Data> msg) {
         if (media_data_channel_) {
             media_data_channel_->SendData(msg);
         }
     }
 
-    void RtcConnection::PostFtMessage(const std::string &msg) {
+    void RtcConnection::PostFtMessage(std::shared_ptr<Data> msg) {
         if (ft_data_channel_) {
             ft_data_channel_->SendData(msg);
         }

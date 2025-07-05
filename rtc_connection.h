@@ -37,8 +37,8 @@ namespace tc
         bool OnRemoteSdp(const std::string &sdp) override;
         bool OnRemoteIce(const std::string &ice, const std::string &mid, int32_t sdp_mline_index) override;
 
-        void PostMediaMessage(const std::string &msg) override;
-        void PostFtMessage(const std::string &msg) override;
+        void PostMediaMessage(std::shared_ptr<Data> msg) override;
+        void PostFtMessage(std::shared_ptr<Data> msg) override;
 
         int64_t GetQueuingMediaMsgCount() override;
         int64_t GetQueuingFtMsgCount() override;
