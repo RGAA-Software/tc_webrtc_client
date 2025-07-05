@@ -166,7 +166,7 @@ namespace tc
         return connected_;
     }
 
-    void RtcDataChannel::SendData(const std::string& msg) {
+    void RtcDataChannel::SendData(std::shared_ptr<Data> msg) {
         if (!connected_) {
             LOGW("DataChannel is invalid: {}", name_);
             return;
@@ -183,17 +183,17 @@ namespace tc
         // wrap message
         auto header = NetTlvHeader {
             .type_ = kNetTlvFull,
-            .this_buffer_length_ = (uint32_t)msg.size(),
+            .this_buffer_length_ = (uint32_t)msg->Size(),
             .this_buffer_begin_ = 0,
-            .this_buffer_end_ = (uint32_t)msg.size(),
+            .this_buffer_end_ = (uint32_t)msg->Size(),
             .pkt_index_ = send_pkt_index_++,
-            .parent_buffer_length_ = (uint32_t)msg.size(),
+            .parent_buffer_length_ = (uint32_t)msg->Size(),
         };
 
         std::string buffer;
-        buffer.resize(sizeof(NetTlvHeader) + msg.size());
+        buffer.resize(sizeof(NetTlvHeader) + msg->Size());
         memcpy((char*)buffer.data(), (char*)&header, sizeof(NetTlvHeader));
-        memcpy((char*)buffer.data() + sizeof(NetTlvHeader), msg.data(), msg.size());
+        memcpy((char*)buffer.data() + sizeof(NetTlvHeader), msg->DataAddr(), msg->Size());
 
         auto rtc_buffer = webrtc::DataBuffer(rtc::CopyOnWriteBuffer(buffer), true);
 

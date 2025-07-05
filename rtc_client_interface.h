@@ -46,8 +46,8 @@ namespace tc
             local_ice_cbk_ = cbk;
         }
 
-        virtual void PostMediaMessage(const std::string& msg) = 0;
-        virtual void PostFtMessage(const std::string& msg) = 0;
+        virtual void PostMediaMessage(std::shared_ptr<Data> msg) = 0;
+        virtual void PostFtMessage(std::shared_ptr<Data> msg) = 0;
 
         virtual void SetMediaMessageCallback(const OnMediaMessageCallback& cbk) {
             media_msg_cbk_ = cbk;
