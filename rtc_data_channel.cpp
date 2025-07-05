@@ -3,9 +3,10 @@
 //
 
 #include "rtc_data_channel.h"
-#include "tc_common_new/log.h"
-#include "tc_common_new/net_tlv_header.h"
 #include "rtc_connection.h"
+#include "tc_common_new/log.h"
+#include "tc_common_new/data.h"
+#include "tc_common_new/net_tlv_header.h"
 
 namespace tc
 {
@@ -40,9 +41,12 @@ namespace tc
 
         total_recv_content_bytes_ += header->this_buffer_length_;
 
-        std::string data;
-        data.resize(header->this_buffer_length_);
-        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
+//        std::string data;
+//        data.resize(header->this_buffer_length_);
+//        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
+
+        auto data = Data::Make(nullptr, header->this_buffer_length_);
+        memcpy(data->DataAddr(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
 
         if (IsFtChannel()) {
             auto curr_pkt_index = header->pkt_index_;
@@ -74,22 +78,31 @@ namespace tc
                 cached_messages_.clear();
             }
             cached_messages_.push_back(NetTlvMessage{
-                    .type_ = header->type_,
-                    .buffer_ = data,
+                .type_ = header->type_,
+                .buffer_ = data,
             });
 
             if (header->type_ == kNetTlvEnd) {
                 uint32_t total_size = 0;
                 for (const auto &m: cached_messages_) {
-                    total_size += (uint32_t) m.buffer_.size();
+                    if (!m.buffer_) {
+                        LOGE("Empty buffer.");
+                        continue;
+                    }
+                    total_size += (uint32_t) m.buffer_->Size();
                 }
 
-                std::string total_data;
-                total_data.resize(total_size);
+                //std::string total_data;
+                //total_data.resize(total_size);
+                auto total_data = Data::Make(nullptr, total_size);
                 uint32_t offset = 0;
                 for (const auto &m: cached_messages_) {
-                    memcpy((char *) total_data.data() + offset, m.buffer_.data(), m.buffer_.size());
-                    offset += m.buffer_.size();
+                    if (!m.buffer_) {
+                        LOGE("Empty buffer.");
+                        continue;
+                    }
+                    memcpy((char *)total_data->DataAddr() + offset, m.buffer_->CStr(), m.buffer_->Size());
+                    offset += m.buffer_->Size();
                 }
                 if (data_cbk_) {
                     data_cbk_(total_data);
