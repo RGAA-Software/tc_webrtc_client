@@ -5,17 +5,20 @@
 #ifndef GAMMARAY_RTC_CLIENT_INTERFACE_H
 #define GAMMARAY_RTC_CLIENT_INTERFACE_H
 
+#include <memory>
 #include <string>
 #include <functional>
 
 namespace tc
 {
 
+    class Data;
+
     using OnLocalSdpSetCallback = std::function<void(const std::string&)>;
     using OnLocalIceCallback = std::function<void(const std::string& ice, const std::string& mid, int sdp_mline_index)>;
 
-    using OnMediaMessageCallback = std::function<void(const std::string& msg)>;
-    using OnFtMessageCallback = std::function<void(const std::string& msg)>;
+    using OnMediaMessageCallback = std::function<void(std::shared_ptr<Data>)>;
+    using OnFtMessageCallback = std::function<void(std::shared_ptr<Data>)>;
 
     class RtcClientInterface {
     public:

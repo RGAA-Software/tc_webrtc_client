@@ -12,14 +12,15 @@
 namespace tc
 {
 
-    using OnDataCallback = std::function<void(const std::string&)>;
-
+    class Data;
     class RtcConnection;
+
+    using OnDataCallback = std::function<void(std::shared_ptr<Data>)>;
 
     class NetTlvMessage {
     public:
         uint32_t type_{0};
-        std::string buffer_;
+        std::shared_ptr<Data> buffer_ = nullptr;
     };
 
     class RtcDataChannel :  public webrtc::DataChannelObserver {
@@ -55,7 +56,7 @@ namespace tc
         std::atomic<uint64_t> last_recv_pkt_index_ = 0;
 
         std::mutex cached_messages_mtx_;
-        std::map<uint64_t, std::string> cached_ft_messages_;
+        std::map<uint64_t, std::shared_ptr<Data>> cached_ft_messages_;
 
         // test beg //
         uint64_t total_recv_content_bytes_ = 0;

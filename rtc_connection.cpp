@@ -209,7 +209,7 @@ namespace tc
                 auto ch = r_dc.value();
                 ch->AddRef();
                 media_data_channel_ = std::make_shared<RtcDataChannel>(this, ch, ch_name);
-                media_data_channel_->SetOnDataCallback([=, this](const std::string& msg) {
+                media_data_channel_->SetOnDataCallback([=, this](std::shared_ptr<Data> msg) {
                     //LOGI("===> OnDataCallback: {}", msg.size());
                     if (media_msg_cbk_) {
                         media_msg_cbk_(msg);
@@ -229,7 +229,7 @@ namespace tc
             } else {
                 auto ch = r_dc.value();
                 ft_data_channel_ = std::make_shared<RtcDataChannel>(this, ch, ch_name);
-                ft_data_channel_->SetOnDataCallback([=, this](const std::string& msg) {
+                ft_data_channel_->SetOnDataCallback([=, this](std::shared_ptr<Data> msg) {
                     if (ft_msg_cbk_) {
                         ft_msg_cbk_(msg);
                     }
