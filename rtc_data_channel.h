@@ -63,6 +63,6 @@ namespace tc
         // test end //
     };
 
-} // namespace dl
+} // namespace tc
 
 #endif //TEST_WEBRTC_DATA_CHANNEL_OBSERVER_IMPL_H
