@@ -32,7 +32,7 @@ namespace tc
             //context_->SendAppMessage(ClientEvtDataChannelClosed{});
 
         }
-        LOGI("DataChannel[ {} ] state changed: {}, connected: {}", name_, (int)data_channel_->state(), connected_);
+        LOGI("DataChannel[ {} ] state changed: {}, connected: {}", name_, (int)data_channel_->state(), connected_.load());
     }
 
     void RtcDataChannel::OnMessage(const webrtc::DataBuffer &buffer) {
@@ -55,7 +55,7 @@ namespace tc
             }
             auto diff = curr_pkt_index - last_recv_pkt_index_;
             if (diff != 1) {
-                LOGE("**** Message Index Error ****\n current index: {}, last index: {}", curr_pkt_index, last_recv_pkt_index_);
+                LOGE("**** Message Index Error ****\n current index: {}, last index: {}", curr_pkt_index, last_recv_pkt_index_.load());
             }
             //LOGI("from: {}, index: {} => Message size: {}, diff: {}", name_, header->pkt_index_, header->this_buffer_length_, diff);
             last_recv_pkt_index_ = curr_pkt_index;
