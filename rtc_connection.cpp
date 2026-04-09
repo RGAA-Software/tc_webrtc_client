@@ -10,6 +10,8 @@
 #include "peer_callback.h"
 #include "rtc_data_channel.h"
 #include <QApplication>
+#include <tc_common_new/folder_util.h>
+#include <tc_common_new/string_util.h>
 
 void* GetInstance() {
     static tc::RtcConnection conn;
@@ -30,7 +32,9 @@ namespace tc
         this->remote_device_id_ = remote_device_id;
         auto beg = TimeUtil::GetCurrentTimestamp();
         auto exe_dir = qApp->applicationDirPath();
-        Logger::InitLog(exe_dir.toStdString() + std::format("/gr_logs/app.rtc.{}.log", remote_device_id), true);
+        auto data_path = FolderUtil::GetProgramDataPath();
+        const auto log_path = std::format(L"{}/gr_logs/app.rtc.{}.log", data_path, StringUtil::ToWString(remote_device_id));
+        Logger::InitLog(log_path, true);
         LOGI("*******************************");
         LOGI("========BEGIN RTC INIT=========");
 
