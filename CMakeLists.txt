@@ -22,7 +22,7 @@ include_directories(${WEBRTC_ROOT}/include/third_party/jsoncpp/source/include/)
 include_directories(${WEBRTC_ROOT}/include/base)
 link_directories(${GR_PROJECT_PATH}/deps/tc_3rdparty/webrtc/x64)
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 set(PLUGIN_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/peer_callback.cpp
@@ -33,7 +33,7 @@ set(PLUGIN_SRCS
 
 add_library(${PROJECT_NAME} SHARED ${PLUGIN_SRCS})
 #add_library(${PROJECT_NAME} ${PLUGIN_SRCS})
-target_link_libraries(${PROJECT_NAME} PUBLIC tc_common_new Qt6::Core
+target_link_libraries(${PROJECT_NAME} PUBLIC tc_common_new Qt6::Core Qt6::Widgets
         ${WEBRTC_ROOT}/x64/webrtc.lib
         Winmm
         ws2_32
