@@ -20,7 +20,7 @@ include_directories(${WEBRTC_ROOT}/include)
 include_directories(${WEBRTC_ROOT}/include/third_party/abseil-cpp)
 include_directories(${WEBRTC_ROOT}/include/third_party/jsoncpp/source/include/)
 include_directories(${WEBRTC_ROOT}/include/base)
-link_directories(${GR_PROJECT_PATH}/deps/tc_3rdparty/webrtc/x64)
+link_directories(${GR_PROJECT_PATH}/tc_3rdparty/webrtc/x64)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
