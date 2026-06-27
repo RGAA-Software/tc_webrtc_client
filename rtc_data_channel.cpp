@@ -36,8 +36,17 @@ namespace tc
     }
 
     void RtcDataChannel::OnMessage(const webrtc::DataBuffer &buffer) {
-        //LOGI("DataChannel Message: {}", buffer.size());
-        auto header = (NetTlvHeader*)buffer.data.data();
+        if (buffer.data.size() < sizeof(NetTlvHeader)) {
+            LOGE("RtcDataChannel TLV header too small: {}", buffer.data.size());
+            return;
+        }
+        auto header = reinterpret_cast<const NetTlvHeader*>(buffer.data.data());
+        const size_t payload_len = buffer.data.size() - sizeof(NetTlvHeader);
+        if (header->this_buffer_length_ > payload_len) {
+            LOGE("RtcDataChannel TLV length invalid: declared={}, available={}",
+                 header->this_buffer_length_, payload_len);
+            return;
+        }
 
         total_recv_content_bytes_ += header->this_buffer_length_;
 
@@ -46,7 +55,7 @@ namespace tc
 //        memcpy(data.data(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
 
         auto data = Data::Make(nullptr, header->this_buffer_length_);
-        memcpy(data->DataAddr(), (char*)header + sizeof(NetTlvHeader), header->this_buffer_length_);
+        memcpy(data->DataAddr(), reinterpret_cast<const char*>(header) + sizeof(NetTlvHeader), header->this_buffer_length_);
 
         if (IsFtChannel()) {
             auto curr_pkt_index = header->pkt_index_;
